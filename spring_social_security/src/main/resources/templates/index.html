@@ -7,13 +7,16 @@
 <script src="js/jquery-2.1.4.min.js"></script>
 
 <link rel="stylesheet" href="css/bootstrap/css/bootstrap.min.css"></link>
+<link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css"></link>
+<link rel="stylesheet" href="css/bootstrap-social-gh-pages/bootstrap-social.css"></link>
+
 <script src="css/bootstrap/js/bootstrap.min.js"></script>
 </head>
 <body>
 
 	<!-- Button trigger modal -->
 	<button type="button" class="btn btn-primary btn-lg"
-		data-toggle="modal" data-target="#loginModal">Login/Register
+		data-toggle="modal" data-target="#loginModal">Login
 	</button>
 	<!-- Modal -->
 	<div class="modal fade" id="loginModal" tabindex="-1" role="dialog"
@@ -55,13 +58,13 @@
 								<form th:action="@{signin/login/facebook}" method="POST">
 									<input type="hidden" name="scope" value="read_stream" />
 									<p>
-										<button type="submit">Connect to Facebook</button>
+										<button type="submit" class="btn btn-block btn-social btn-facebook"><span class="fa fa-twitter"></span> Sign in with Facebook</button>
 									</p>
 								</form>
 								<form th:action="@{signin/login/google}" method="POST">
 									<input type="hidden" name="scope" value="read_stream" />
 									<p>
-										<button type="submit">Connect to Google</button>
+										<button type="submit" class="btn btn-block btn-social btn-google"><span class="fa fa-google"></span> Sign in with Facebook</button>
 									</p>
 								</form>
 							</div>
