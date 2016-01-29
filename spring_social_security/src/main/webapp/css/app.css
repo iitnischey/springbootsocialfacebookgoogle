@@ -1,0 +1,35 @@
+#login_register_container input:not([type=checkbox]) {
+	height: 50px;
+	border: 1px solid #eaedef;
+	background: #fafafa;
+}
+#login_register_container .btn {
+	height: 50px;
+}
+#loginModal {
+	font-family: montserrat,Arial,sans-serif;
+}
+#loginModal .login-button , #loginModal .register-button {
+	width: 100%;
+	background-color: #65c6bb; 
+	color: white;
+}
+#loginModal .modal-content {
+	padding : 40px;
+}
+
+#loginModal .form-group {
+	margin-bottom: 5px;
+}
+#social_signin_view {
+	margin-top: 100px;
+}
+.btn-social {
+	height:50px;
+	padding-left: 60px;
+}
+.btn-social>:first-child {
+	line-height: 50px;
+	height:50px;
+	width:50px;
+}
