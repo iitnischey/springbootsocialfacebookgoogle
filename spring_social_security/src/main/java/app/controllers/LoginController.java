@@ -1,6 +1,7 @@
 package app.controllers;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -42,6 +43,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.sendgrid.SendGrid;
+import com.sendgrid.SendGridException;
+
 import app.entities.AppUser;
 import app.entities.descriptors.SignInProvider;
 import app.repositories.StorageProvider;
@@ -55,7 +59,7 @@ public class LoginController {
 
 	@Autowired
 	private Environment env;
-	
+
 	@Autowired
 	private FacebookConnectionFactory facebookConnectionFactory;
 
@@ -108,8 +112,9 @@ public class LoginController {
 	}
 
 	@RequestMapping(value = "/login/google/callback")
-	public String googleSignInCallback(@RequestParam String code,
-			HttpServletRequest request, HttpServletResponse response) {
+	public void googleSignInCallback(@RequestParam String code,
+			HttpServletRequest request, HttpServletResponse response)
+			throws IOException {
 		OAuth2Operations oauthOperations = googleConnectionFactory
 				.getOAuthOperations();
 		String authorizationCode = code;
@@ -132,16 +137,22 @@ public class LoginController {
 		}
 		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
 		authorities.add(new SimpleGrantedAuthority(user.getRole().toString()));
-		UserDetails userDetails = new User(userId, user.getPassword(), authorities);
+		UserDetails userDetails = new User(userId, user.getPassword(),
+				authorities);
 		SecurityContextHolder.getContext().setAuthentication(
 				new UsernamePasswordAuthenticationToken(userDetails, null,
 						authorities));
-		return "redirect:/";
+		response.setContentType("text/html");
+		PrintWriter out = response.getWriter();
+		out.println("<script type='text/javascript'>");
+		out.println("window.close(); ");
+		out.println("</script>");
+		//return "redirect:/";
 	}
 
 	@RequestMapping(value = "/login/facebook/callback")
-	public String facebookSignInCallback(@RequestParam String code,
-			HttpServletRequest request, HttpServletResponse response) {
+	public void facebookSignInCallback(@RequestParam String code,
+			HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		OAuth2Operations oauthOperations = facebookConnectionFactory
 				.getOAuthOperations();
@@ -165,11 +176,16 @@ public class LoginController {
 		}
 		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
 		authorities.add(new SimpleGrantedAuthority(user.getRole().toString()));
-		UserDetails userDetails = new User(userId, user.getPassword(), authorities);
+		UserDetails userDetails = new User(userId, user.getPassword(),
+				authorities);
 		SecurityContextHolder.getContext().setAuthentication(
 				new UsernamePasswordAuthenticationToken(userDetails, null,
 						authorities));
-		return "redirect:/";
+		PrintWriter out = response.getWriter();
+		out.println("<script type='text/javascript'>");
+		out.println("window.close(); ");
+		out.println("</script>");
+		//return "redirect:/";
 	}
 
 	@RequestMapping(value = "/register")
@@ -178,7 +194,14 @@ public class LoginController {
 			@RequestParam String register_password,
 			@RequestParam String register_confirm_password) {
 		if (register_confirm_password.equals(register_password)) {
-			return storage.registerUser(register_name, register_password);
+			String email = storage.registerUser(register_name,
+					register_password);
+			try {
+				_sendMail(register_name, "Welcome to App!!!", "Cheers :)");
+			} catch (SendGridException e) {
+				return null;
+			}
+			return email;
 		}
 		return null;
 	}
@@ -187,40 +210,25 @@ public class LoginController {
 	@ResponseBody
 	public String setCookie(HttpServletRequest request,
 			HttpServletResponse response) {
-		TokenBasedRememberMeServices rememberMeService = new TokenBasedRememberMeServices("mykey", userDetailsService);
-		rememberMeService.onLoginSuccess(request, response, SecurityContextHolder.getContext().getAuthentication());
+		TokenBasedRememberMeServices rememberMeService = new TokenBasedRememberMeServices(
+				"mykey", userDetailsService);
+		rememberMeService.onLoginSuccess(request, response,
+				SecurityContextHolder.getContext().getAuthentication());
 		return "done boss";
 	}
 
-	private Cookie _cookieGenerator() {
-		long expirationTime = 15 * 24 * 60 * 60;
-		UserDetails userDetails = (UserDetails) SecurityContextHolder
-				.getContext().getAuthentication().getPrincipal();
-		String username = userDetails.getUsername();
-		String password = userDetails.getPassword();
-		String password2 = userDetailsService.loadUserByUsername(username).getPassword();
-		String md5Hex = _cookieMD5Contents(expirationTime, username, password2);
-		String cookieContents = Base64.encodeBase64String((username + ":"
-				+ expirationTime + ":" + md5Hex).getBytes());
-		
-		Cookie rememberMe = new Cookie("remember-me-dummy", cookieContents);
-		rememberMe.setPath("/");
-		rememberMe.setMaxAge((int) expirationTime);
-		rememberMe.setHttpOnly(true);
-		return rememberMe;
-	}
+	private boolean _sendMail(String mail, String subject, String body)
+			throws SendGridException {
+		SendGrid sendgrid = new SendGrid(env.getProperty("sendgrid.key"));
 
-	private String _cookieMD5Contents(long tokenExpiryTime, String username,
-			String password) {
-		String data = username + ":" + tokenExpiryTime + ":" + password + ":"
-				+ "mykey";
-		MessageDigest digest;
-		try {
-			digest = MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("No MD5 algorithm available!");
-		}
+		SendGrid.Email email = new SendGrid.Email();
 
-		return new String(Hex.encode(digest.digest(data.getBytes())));
+		email.addTo(mail);
+		email.setFrom(env.getProperty("notification.email"));
+		email.setSubject(subject);
+		email.setHtml(body);
+
+		SendGrid.Response response = sendgrid.send(email);
+		return response.getStatus();
 	}
 }
