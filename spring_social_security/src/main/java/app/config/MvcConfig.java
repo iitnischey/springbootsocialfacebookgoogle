@@ -1,9 +1,13 @@
 package app.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.thymeleaf.extras.springsecurity3.dialect.SpringSecurityDialect;
+import org.thymeleaf.spring4.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ServletContextTemplateResolver;
 
 @Configuration
 public class MvcConfig extends WebMvcConfigurerAdapter {
@@ -15,6 +19,7 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
 //        registry.addViewController("/hello").setViewName("hello");
         registry.addViewController("/login").setViewName("login");
     }
+
 
 //    @Override
 //    public void addResourceHandlers(ResourceHandlerRegistry registry) {
